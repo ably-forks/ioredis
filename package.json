@@ -12,7 +12,6 @@
     "lint": "eslint --ext .js,.ts .",
     "format": "prettier --write \"{,!(node_modules)/**/}*.{js,ts}\"",
     "format-check": "prettier --check \"{,!(node_modules)/**/}*.{js,ts}\"",
-    "build": "rm -rf built && tsc",
     "prepublishOnly": "npm run build && npm test",
     "semantic-release": "semantic-release"
   },
