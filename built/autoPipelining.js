@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.executeWithAutoPipelining = exports.shouldUseAutoPipelining = exports.notAllowedAutoPipelineCommands = exports.kCallbacks = exports.kExec = void 0;
 const PromiseContainer = require("./promiseContainer");
 const calculateSlot = require("cluster-key-slot");
 const standard_as_callback_1 = require("standard-as-callback");
@@ -33,10 +34,17 @@ function executeAutoPipeline(client, slotKey) {
     if (client._runningAutoPipelines.has(slotKey)) {
         return;
     }
-    client._runningAutoPipelines.add(slotKey);
-    // Get the pipeline and immediately delete it so that new commands are queued on a new pipeline
     const pipeline = client._autoPipelines.get(slotKey);
+    if (pipeline === undefined) {
+        /* Some race condition; unsure of the cause, but catch it here and return before
+         * setting the runningAutoPipelines flag else we'll throw after adding the flag and
+         * never run another pipeline */
+        console.error(`ioredis executeAutoPipeline: no pipeline with slotKey ${slotKey}`);
+        return;
+    }
+    // Delete the pipeline so that new commands are queued on a new pipeline
     client._autoPipelines.delete(slotKey);
+    client._runningAutoPipelines.add(slotKey);
     const callbacks = pipeline[exports.kCallbacks];
     // Perform the call
     pipeline.exec(function (err, results) {

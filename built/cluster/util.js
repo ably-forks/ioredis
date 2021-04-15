@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getConnectionName = exports.weightSrvRecords = exports.groupSrvRecords = exports.getUniqueHostnamesFromOptions = exports.normalizeNodeOptions = exports.nodeKeyToRedisOptions = exports.getNodeKey = void 0;
 const utils_1 = require("../utils");
 const net_1 = require("net");
 function getNodeKey(node) {
@@ -92,3 +93,8 @@ function weightSrvRecords(recordsGroup) {
     }
 }
 exports.weightSrvRecords = weightSrvRecords;
+function getConnectionName(component, nodeConnectionName) {
+    const prefix = `ioredis-cluster(${component})`;
+    return nodeConnectionName ? `${prefix}:${nodeConnectionName}` : prefix;
+}
+exports.getConnectionName = getConnectionName;

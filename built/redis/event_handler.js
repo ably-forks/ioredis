@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.readyHandler = exports.errorHandler = exports.closeHandler = exports.connectHandler = void 0;
 const redis_errors_1 = require("redis-errors");
 const command_1 = require("../command");
 const errors_1 = require("../errors");
@@ -36,7 +37,11 @@ function connectHandler(self) {
             });
         }
         if (self.condition.select) {
-            self.select(self.condition.select);
+            self.select(self.condition.select).catch((err) => {
+                // If the node is in cluster mode, select is disallowed.
+                // In this case, reconnect won't help.
+                self.silentEmit("error", err);
+            });
         }
         if (!self.options.enableReadyCheck) {
             exports.readyHandler(self)();

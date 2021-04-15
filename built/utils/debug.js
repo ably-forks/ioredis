@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.genRedactedString = exports.getStringValue = exports.MAX_ARGUMENT_LENGTH = void 0;
 const debug_1 = require("debug");
 const MAX_ARGUMENT_LENGTH = 200;
 exports.MAX_ARGUMENT_LENGTH = MAX_ARGUMENT_LENGTH;

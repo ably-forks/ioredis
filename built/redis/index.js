@@ -320,11 +320,22 @@ Redis.prototype.connect = function (callback) {
                     });
                 }
             }
+            else if (stream.destroyed) {
+                const firstError = _this.connector.firstError;
+                if (firstError) {
+                    process.nextTick(() => {
+                        eventHandler.errorHandler(_this)(firstError);
+                    });
+                }
+                process.nextTick(eventHandler.closeHandler(_this));
+            }
             else {
                 process.nextTick(eventHandler.connectHandler(_this));
             }
-            stream.once("error", eventHandler.errorHandler(_this));
-            stream.once("close", eventHandler.closeHandler(_this));
+            if (!stream.destroyed) {
+                stream.once("error", eventHandler.errorHandler(_this));
+                stream.once("close", eventHandler.closeHandler(_this));
+            }
             if (options.noDelay) {
                 stream.setNoDelay(true);
             }
@@ -611,6 +622,13 @@ Redis.prototype.sendCommand = function (command, stream) {
         !command_1.default.checkFlag("VALID_IN_SUBSCRIBER_MODE", command.name)) {
         command.reject(new Error("Connection in subscriber mode, only subscriber commands may be used"));
         return command.promise;
+    }
+    if (typeof this.options.commandTimeout === "number") {
+        setTimeout(() => {
+            if (!command.isResolved) {
+                command.reject(new Error("Command timed out"));
+            }
+        }, this.options.commandTimeout);
     }
     if (command.name === "quit") {
         clearInterval(this._addedScriptHashesCleanInterval);

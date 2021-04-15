@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isIIpcConnectionOptions = void 0;
 const net_1 = require("net");
 const tls_1 = require("tls");
 const utils_1 = require("../utils");
@@ -10,7 +11,7 @@ function isIIpcConnectionOptions(value) {
 exports.isIIpcConnectionOptions = isIIpcConnectionOptions;
 class StandaloneConnector extends AbstractConnector_1.default {
     constructor(options) {
-        super();
+        super(options.disconnectTimeout);
         this.options = options;
     }
     connect(_) {
@@ -62,6 +63,9 @@ class StandaloneConnector extends AbstractConnector_1.default {
                     reject(err);
                     return;
                 }
+                this.stream.once("error", (err) => {
+                    this.firstError = err;
+                });
                 resolve(this.stream);
             });
         });

@@ -185,12 +185,7 @@ class Cluster extends events_1.EventEmitter {
                 this.once("refresh", refreshListener);
                 this.once("close", closeListener);
                 this.once("close", this.handleCloseEvent.bind(this));
-                this.refreshSlotsCache(function (err) {
-                    if (err && err.message === "Failed to refresh slots cache.") {
-                        redis_1.default.prototype.silentEmit.call(this, "error", err);
-                        this.connectionPool.reset([]);
-                    }
-                }.bind(this));
+                this.refreshSlotsCache();
                 this.subscriber.start();
             })
                 .catch((err) => {
@@ -390,6 +385,8 @@ class Cluster extends events_1.EventEmitter {
         function tryNode(index) {
             if (index === nodes.length) {
                 const error = new ClusterAllFailedError_1.default("Failed to refresh slots cache.", lastNodeError);
+                redis_1.default.prototype.silentEmit.call(_this, "error", error);
+                _this.connectionPool.reset([]);
                 return wrapper(error);
             }
             const node = nodes[index];
@@ -608,8 +605,17 @@ class Cluster extends events_1.EventEmitter {
             return;
         }
         const errv = error.message.split(" ");
-        if (errv[0] === "MOVED" || errv[0] === "ASK") {
-            handlers[errv[0] === "MOVED" ? "moved" : "ask"](errv[1], errv[2]);
+        if (errv[0] === "MOVED") {
+            const timeout = this.options.retryDelayOnMoved;
+            if (timeout && typeof timeout === "number") {
+                this.delayQueue.push("moved", handlers.moved.bind(null, errv[1], errv[2]), { timeout });
+            }
+            else {
+                handlers.moved(errv[1], errv[2]);
+            }
+        }
+        else if (errv[0] === "ASK") {
+            handlers.ask(errv[1], errv[2]);
         }
         else if (errv[0] === "TRYAGAIN") {
             this.delayQueue.push("tryagain", handlers.tryagain, {
@@ -646,7 +652,7 @@ class Cluster extends events_1.EventEmitter {
             enableOfflineQueue: true,
             enableReadyCheck: false,
             retryStrategy: null,
-            connectionName: "ioredisClusterRefresher",
+            connectionName: util_1.getConnectionName("refresher", this.options.redisOptions && this.options.redisOptions.connectionName),
         });
         // Ignore error events since we will handle
         // exceptions for the CLUSTER SLOTS command.

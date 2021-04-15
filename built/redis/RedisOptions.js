@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.DEFAULT_REDIS_OPTIONS = void 0;
 exports.DEFAULT_REDIS_OPTIONS = {
     // Connection
     port: 6379,
     host: "localhost",
     family: 4,
     connectTimeout: 10000,
+    disconnectTimeout: 2000,
     retryStrategy: function (times) {
         return Math.min(times * 50, 2000);
     },

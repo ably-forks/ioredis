@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.addTransactionSupport = void 0;
 const utils_1 = require("./utils");
 const standard_as_callback_1 = require("standard-as-callback");
 const pipeline_1 = require("./pipeline");

@@ -46,6 +46,7 @@ class Command {
         this.transformed = false;
         this.isCustomCommand = false;
         this.inTransaction = false;
+        this.isResolved = false;
         this.replyEncoding = options.replyEncoding;
         this.errorStack = options.errorStack;
         this.args = lodash_1.flatten(args);
@@ -220,6 +221,7 @@ class Command {
         return (value) => {
             try {
                 resolve(this.transformReply(value));
+                this.isResolved = true;
             }
             catch (err) {
                 this.reject(err);
@@ -274,9 +276,7 @@ const msetArgumentTransformer = function (args) {
     }
     return args;
 };
-Command.setArgumentTransformer("mset", msetArgumentTransformer);
-Command.setArgumentTransformer("msetnx", msetArgumentTransformer);
-Command.setArgumentTransformer("hmset", function (args) {
+const hsetArgumentTransformer = function (args) {
     if (args.length === 2) {
         if (typeof Map !== "undefined" && args[1] instanceof Map) {
             return [args[0]].concat(utils_1.convertMapToArray(args[1]));
@@ -286,7 +286,11 @@ Command.setArgumentTransformer("hmset", function (args) {
         }
     }
     return args;
-});
+};
+Command.setArgumentTransformer("mset", msetArgumentTransformer);
+Command.setArgumentTransformer("msetnx", msetArgumentTransformer);
+Command.setArgumentTransformer("hset", hsetArgumentTransformer);
+Command.setArgumentTransformer("hmset", hsetArgumentTransformer);
 Command.setReplyTransformer("hgetall", function (result) {
     if (Array.isArray(result)) {
         const obj = {};
@@ -296,17 +300,6 @@ Command.setReplyTransformer("hgetall", function (result) {
         return obj;
     }
     return result;
-});
-Command.setArgumentTransformer("hset", function (args) {
-    if (args.length === 2) {
-        if (typeof Map !== "undefined" && args[1] instanceof Map) {
-            return [args[0]].concat(utils_1.convertMapToArray(args[1]));
-        }
-        if (typeof args[1] === "object" && args[1] !== null) {
-            return [args[0]].concat(utils_1.convertObjectToArray(args[1]));
-        }
-    }
-    return args;
 });
 class MixedBuffers {
     constructor() {

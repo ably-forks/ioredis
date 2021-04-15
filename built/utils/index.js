@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.flatten = exports.noop = exports.defaults = exports.Debug = exports.zipMap = exports.CONNECTION_CLOSED_ERROR_MSG = exports.shuffle = exports.sample = exports.parseURL = exports.optimizeErrorStack = exports.toArg = exports.convertMapToArray = exports.convertObjectToArray = exports.timeout = exports.packObject = exports.isInt = exports.wrapMultiResult = exports.convertBufferToString = exports.bufferEqual = void 0;
 const url_1 = require("url");
 const lodash_1 = require("./lodash");
-exports.defaults = lodash_1.defaults;
-exports.noop = lodash_1.noop;
-exports.flatten = lodash_1.flatten;
+Object.defineProperty(exports, "defaults", { enumerable: true, get: function () { return lodash_1.defaults; } });
+Object.defineProperty(exports, "noop", { enumerable: true, get: function () { return lodash_1.noop; } });
+Object.defineProperty(exports, "flatten", { enumerable: true, get: function () { return lodash_1.flatten; } });
 const debug_1 = require("./debug");
 exports.Debug = debug_1.default;
 /**

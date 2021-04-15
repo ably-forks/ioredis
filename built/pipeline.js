@@ -27,7 +27,8 @@ function generateMultiWithNodes(redis, keys) {
 function Pipeline(redis) {
     commander_1.default.call(this);
     this.redis = redis;
-    this.isCluster = this.redis.constructor.name === "Cluster";
+    this.isCluster =
+        this.redis.constructor.name === "Cluster" || this.redis.isCluster;
     this.isPipeline = true;
     this.options = redis.options;
     this._queue = [];
@@ -268,11 +269,12 @@ Pipeline.prototype.exec = function (callback) {
             continue;
         }
         const script = this._shaToScript[item.args[0]];
-        if (!script || this.redis._addedScriptHashes[script.sha]) {
+        if (!script ||
+            this.redis._addedScriptHashes[script.sha] ||
+            scripts.includes(script)) {
             continue;
         }
         scripts.push(script);
-        this.redis._addedScriptHashes[script.sha] = true;
     }
     const _this = this;
     if (!scripts.length) {
@@ -282,7 +284,12 @@ Pipeline.prototype.exec = function (callback) {
     if (this.isCluster) {
         return pMap(scripts, (script) => _this.redis.script("load", script.lua), {
             concurrency: 10,
-        }).then(execPipeline);
+        }).then(function () {
+            for (let i = 0; i < scripts.length; i++) {
+                _this.redis._addedScriptHashes[scripts[i].sha] = true;
+            }
+            return execPipeline();
+        });
     }
     return this.redis
         .script("exists", scripts.map(({ sha }) => sha))
@@ -298,7 +305,12 @@ Pipeline.prototype.exec = function (callback) {
             return _this.redis.script("load", script.lua);
         }));
     })
-        .then(execPipeline);
+        .then(function () {
+        for (let i = 0; i < scripts.length; i++) {
+            _this.redis._addedScriptHashes[scripts[i].sha] = true;
+        }
+        return execPipeline();
+    });
     function execPipeline() {
         let data = "";
         let buffers;
