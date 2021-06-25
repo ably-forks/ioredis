@@ -365,6 +365,7 @@ Redis.prototype.disconnect = function (reconnect) {
     clearInterval(this._addedScriptHashesCleanInterval);
     this._addedScriptHashesCleanInterval = null;
     if (!reconnect) {
+        console.log('Redis.prototype.disconnect: setting this.manuallyClosing = true');
         this.manuallyClosing = true;
     }
     if (this.reconnectTimeout && !reconnect) {
@@ -384,6 +385,7 @@ Redis.prototype.disconnect = function (reconnect) {
  * @deprecated
  */
 Redis.prototype.end = function () {
+    console.log('Redis.prototype.end: calling this.disconnect()');
     this.disconnect();
 };
 /**
@@ -654,6 +656,7 @@ Redis.prototype.sendCommand = function (command, stream) {
         return command.promise;
     }
     if (!writable && command.name === "quit" && this.offlineQueue.length === 0) {
+        console.log('Redis.prototype.sendCommand: %s; calling this.disconnect()', command.name);
         this.disconnect();
         command.resolve(Buffer.from("OK"));
         return command.promise;
@@ -670,6 +673,7 @@ Redis.prototype.sendCommand = function (command, stream) {
             select: this.condition.select,
         });
         if (command_1.default.checkFlag("WILL_DISCONNECT", command.name)) {
+            console.log('Redis.prototype.sendCommand: %s; setting this.manuallyClosing = true', command.name);
             this.manuallyClosing = true;
         }
     }
